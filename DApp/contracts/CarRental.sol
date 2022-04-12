@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
-pragma abicoder v2;
+
+// test comments 
 
 contract CarRental {
     // Define state variables
@@ -25,7 +26,6 @@ contract CarRental {
 
     struct CarInfo {
         bool isAvailable;
-        address payable carOwner;
         string carLocation;
         uint256 carID;
         uint256 price;
@@ -160,16 +160,32 @@ contract CarRental {
         _user.password = _password;
         _user.isUserLoggedIn = false;
 
+        // Fuzz 
+        assert (_Account != address(0));
+        assert (users[_Account].userID == 0);
+        assert (bytes(_userName).length > 0);
+        assert (bytes(_password).length > 0);
+        assert (_user.userAddress == _Account);
+        assert (_user.isUserLoggedIn == false);
+
         users[_Account] = _user;
 
         emit accountCreated(_user);
         return true;
     }
+
+
     function Login(address _address, string memory _password) public returns (bool) {
         User memory _user = users[_address];
         if (keccak256(abi.encodePacked(_user.password)) ==
             keccak256(abi.encodePacked(_password))) {
             _user.isUserLoggedIn = true;
+
+            // Fuzz
+            assert (_user.isUserLoggedIn == true);
+            assert ((keccak256(abi.encodePacked(_user.password)) == keccak256(abi.encodePacked(_password))));
+
+
             emit LoginDone(_user);
             return _user.isUserLoggedIn;
         } else {
@@ -177,8 +193,13 @@ contract CarRental {
             return false;
         }
     }
+
+
     function logout(address _address) public {
         users[_address].isUserLoggedIn = false;
+
+        //Fuzz
+        assert (users[_address].isUserLoggedIn == false);
     }
 
 
@@ -200,6 +221,10 @@ contract CarRental {
         //carInformation.push(_car);
         //cars[carOwner].push(information);
 
+        // Fuzz
+        assert (bytes(_carOwner).length > 0 && bytes(_carLocation).length > 0);
+        assert (_car.isAvailable == true);
+
         emit carAdded(totalCarNum, _car);
         return true;
 
@@ -218,11 +243,27 @@ contract CarRental {
         rentals[rentalOwner].hasReturned = false;
         _car.isAvailable = false;
 
+        // Fuzz
+        assert ( _car.isAvailable == true );
+        assert ( rentals[rentalOwner].isValidRental == true );
+        assert (bytes(_customerName).length != 0); 
+        assert (_age >= 18); 
+        assert (_licenseID != 0); 
+        assert (_licenseID != 0); 
+        assert (rentals[rentalOwner].hasConfirmed == false);
+        assert (rentals[rentalOwner].hasReturned == false);
+        assert (_car.isAvailable == false);
+
         //wallet.transfer(msg.value);
         emit rentalPlaced(rentals[rentalOwner].customerName, rentals[rentalOwner].customerAge, rentals[rentalOwner].licenseID, _carID);
     }
+
     function confirmRental() public existingRental() {
         rentals[rentalOwner].hasConfirmed = true;
+
+        //Fuzz
+        assert (rentals[rentalOwner].hasConfirmed == true);
+
         // wallet.transfer(msg.value);
         emit rentalConfirmed(rentals[rentalOwner].customerName, rentals[rentalOwner].customerAge, rentals[rentalOwner].licenseID);
     }
@@ -232,13 +273,24 @@ contract CarRental {
         rentals[rentalOwner].isValidRental = false;
         rentalOwner.transfer(price);
 
+        // Fuzz
+        assert (rentals[rentalOwner].hasConfirmed == false);
+        assert (rentals[rentalOwner].isValidRental == false);
+
         emit rentalCanceled(rentals[rentalOwner].customerName, rentals[rentalOwner].customerAge, rentals[rentalOwner].licenseID);
     }
+
     function returnCar(uint256 _carID) public existingRental(){
         rentals[rentalOwner].hasConfirmed = false;
         rentals[rentalOwner].isValidRental = false;
         rentals[rentalOwner].hasReturned = true;
         cars[_carID].isAvailable = true;
+
+        // Fuzz
+        assert (rentals[rentalOwner].hasConfirmed == false);
+        assert (rentals[rentalOwner].isValidRental == false);
+        assert (rentals[rentalOwner].hasReturned == true);
+        assert (cars[_carID].isAvailable == true);
 
         emit carReturned(rentals[rentalOwner].customerName, rentals[rentalOwner].customerAge, rentals[rentalOwner].licenseID);
     }
@@ -249,13 +301,6 @@ contract CarRental {
 
     function getcarAvailability(uint256 _carID) public view returns (bool) {
         return cars[_carID].isAvailable;
-    }
-    function getPostedCars() public pure returns(CarInfo memory, string memory) {
-        CarInfo memory _car;
-        return (_car, "Get posted car information!");
-    }
-    function getUserName() public view returns(bool, string memory, address) {
-        return (true, users[msg.sender].userName, msg.sender);
     }
     function getorderValidity () public view returns (bool) {
         return rentals[rentalOwner].isValidRental;
@@ -290,10 +335,7 @@ contract CarRental {
     } 
     function getBalanceofOwner() public view returns(uint256) {
         return balances[rentalOwner];
+
     } 
-
-
-
-
     
 }
